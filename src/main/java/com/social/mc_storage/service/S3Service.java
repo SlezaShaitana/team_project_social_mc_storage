@@ -4,51 +4,53 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.io.InputStream;
+import java.net.URI;
+    @Service
+    public class S3Service {
 
-@Service
-@RequiredArgsConstructor
-public class S3Service {
+        private final String accessKey;
+        private final String secretKey;
+        private final String bucketName;
+        private final S3Client s3Client;
 
-    private final S3Client s3Client;
+        public S3Service(
+                @Value("${cloud.yandex.s3.access-key}") String accessKey,
+                @Value("${cloud.yandex.s3.secret-key}") String secretKey,
+                @Value("${cloud.yandex.s3.bucket-name}") String bucketName) {
 
-    @Value("${cloud.yandex.s3.bucket-name}")
-    private String bucketName;
+            this.accessKey = accessKey;
+            this.secretKey = secretKey;
+            this.bucketName = bucketName;
 
-    public void uploadFile(String key, MultipartFile file) throws IOException {
-        File tempFile = convertMultiPartFileToFile(file);
+            this.s3Client = S3Client.builder()
+                    .endpointOverride(URI.create("https://storage.yandexcloud.net"))
+                    .region(Region.of("ru-central1"))
+                    .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(this.accessKey, this.secretKey)))
+                    .build();
+        }
+
+    public String storage(MultipartFile file) throws IOException {
+        String fileName = file.getOriginalFilename();
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
-                .key(key)
+                .key(fileName)
+                .contentType(file.getContentType())
                 .build();
 
-        s3Client.putObject(putObjectRequest, Paths.get(tempFile.getPath()));
+        try(InputStream inputStream = file.getInputStream()) {
+            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
+        }
 
-        tempFile.delete();
-    }
-
-    public void downloadFile(String key, String downloadPath) {
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .build();
-
-        s3Client.getObject(getObjectRequest, Paths.get(downloadPath));
-    }
-
-    private File convertMultiPartFileToFile(MultipartFile file) throws IOException {
-        File convFile = new File(file.getOriginalFilename());
-        FileOutputStream fos = new FileOutputStream(convFile);
-        fos.write(file.getBytes());
-        fos.close();
-        return convFile;
+        return String.format("https://%s.%s/%s", bucketName, "storage.yandexcloud.net", fileName);
     }
 }
