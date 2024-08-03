@@ -16,10 +16,6 @@ public class StorageController {
 
     @PostMapping
     public String uploadToStore(@RequestParam(required = false) MultipartFile file){
-        try {
-            return service.storage(file);
-        } catch (IOException e) {
-            return "Error uploading file: " + e.getMessage();
-        }
+        return service.storage(file);
     }
 }

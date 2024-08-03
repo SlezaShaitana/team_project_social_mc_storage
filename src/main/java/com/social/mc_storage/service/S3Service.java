@@ -1,6 +1,6 @@
 package com.social.mc_storage.service;
 
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -10,11 +10,10 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
     @Service
+    @Slf4j
     public class S3Service {
 
         private final String accessKey;
@@ -38,7 +37,7 @@ import java.net.URI;
                     .build();
         }
 
-    public String storage(MultipartFile file) throws IOException {
+    public String storage(MultipartFile file)  {
         String fileName = file.getOriginalFilename();
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -49,6 +48,9 @@ import java.net.URI;
 
         try(InputStream inputStream = file.getInputStream()) {
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
+            log.info("The image has been successfully sent to the storage");
+        } catch (Exception ex){
+            log.error("the image was not sent to the storage, an error occurred: {}", ex.getMessage() );
         }
 
         return String.format("https://%s.%s/%s", bucketName, "storage.yandexcloud.net", fileName);
