@@ -1,25 +1,28 @@
 package com.social.mc_storage.controller;
 
 import com.social.mc_storage.service.S3Service;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/storage")
+@RequiredArgsConstructor
 public class StorageController {
 
     private final S3Service service;
 
-    @Autowired
-    public StorageController(S3Service service) {
-        this.service = service;
-    }
-
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(@RequestParam String key, @RequestParam String filePath) {
-        service.uploadFile(key, filePath);
-        return ResponseEntity.ok("File upload successfully!");
+    public ResponseEntity<String> uploadFile(@RequestParam String fileName, @RequestParam MultipartFile filePath) {
+        try {
+            service.uploadFile(fileName, filePath);
+            return ResponseEntity.ok("File uploaded successfully!");
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed: " + e.getMessage());
+        }
     }
 
     @GetMapping("/download")
