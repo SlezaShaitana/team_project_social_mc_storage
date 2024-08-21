@@ -37,22 +37,25 @@ import java.net.URI;
                     .build();
         }
 
-    public String storage(MultipartFile file)  {
-        String fileName = file.getOriginalFilename();
+        public String storage(MultipartFile file)  {
+            String fileName = file.getOriginalFilename();
 
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(fileName)
-                .contentType(file.getContentType())
-                .build();
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(fileName)
+                    .contentType(file.getContentType())
+                    .build();
 
-        try(InputStream inputStream = file.getInputStream()) {
-            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
-            log.info("The image has been successfully sent to the storage");
-        } catch (Exception ex){
-            log.error("the image was not sent to the storage, an error occurred: {}", ex.getMessage() );
+            try(InputStream inputStream = file.getInputStream()) {
+                long startTime = System.currentTimeMillis();
+                s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
+                long endTime = System.currentTimeMillis();
+                log.info("The image has been successfully sent to the storage in {} ms", (endTime - startTime));
+            } catch (Exception ex){
+                log.error("The image was not sent to the storage, an error occurred: {}", ex.getMessage());
+                throw new RuntimeException("Failed to upload file to storage", ex);  // Кинуть исключение для возврата ошибки клиенту
+            }
+
+            return String.format("https://%s.%s/%s", bucketName, "storage.yandexcloud.net", fileName);
         }
-
-        return String.format("https://%s.%s/%s", bucketName, "storage.yandexcloud.net", fileName);
-    }
 }
