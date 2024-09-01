@@ -1,5 +1,6 @@
 package com.social.mc_storage.service;
 
+import com.social.mc_storage.dto.StorageDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -37,7 +38,7 @@ import java.net.URI;
                     .build();
         }
 
-        public String storage(MultipartFile file)  {
+        public StorageDto storage(MultipartFile file) {
             String fileName = file.getOriginalFilename();
 
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -51,11 +52,13 @@ import java.net.URI;
                 s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
                 long endTime = System.currentTimeMillis();
                 log.info("The image has been successfully sent to the storage in {} ms", (endTime - startTime));
-            } catch (Exception ex){
+            } catch (Exception ex) {
                 log.error("The image was not sent to the storage, an error occurred: {}", ex.getMessage());
-                throw new RuntimeException("Failed to upload file to storage", ex);  // Кинуть исключение для возврата ошибки клиенту
+                throw new RuntimeException("Failed to upload file to storage", ex);
             }
 
-            return String.format("https://%s.%s/%s", bucketName, "storage.yandexcloud.net", fileName);
+            StorageDto storageDto = new StorageDto();
+            storageDto.setFileName(String.format("https://%s.%s/%s", bucketName, "storage.yandexcloud.net", fileName));
+            return storageDto;
         }
-}
+    }

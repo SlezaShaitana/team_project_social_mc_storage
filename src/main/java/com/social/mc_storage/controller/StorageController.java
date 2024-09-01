@@ -1,8 +1,8 @@
 package com.social.mc_storage.controller;
 
+import com.social.mc_storage.dto.StorageDto;
 import com.social.mc_storage.service.S3Service;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,12 +16,7 @@ public class StorageController {
     private final S3Service service;
 
     @PostMapping
-    public String uploadToStore(@RequestParam(required = false) MultipartFile file){
+    public StorageDto uploadToStore(@RequestParam(required = false) MultipartFile file){
         return service.storage(file);
-    }
-
-    @RequestMapping(method = RequestMethod.OPTIONS)
-    public ResponseEntity<Void> handleOptionsRequest() {
-        return ResponseEntity.ok().build();
     }
 }
