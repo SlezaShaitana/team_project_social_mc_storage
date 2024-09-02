@@ -17,7 +17,7 @@ public class StorageController {
 
     private final S3Service service;
 
-    @PostMapping(consumes = MediaType.IMAGE_JPEG_VALUE)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public StorageDto uploadToStore(@RequestParam(required = false) MultipartFile file){
         log.info("Controller file {}", file);
         return service.storage(file);
