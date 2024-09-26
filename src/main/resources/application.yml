@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: "mc-storage"
+
+cloud:
+  yandex:
+    s3:
+      bucket-name: skb44gr
+      access-key: ${YANDEX_S3_ACCESS_KEY}
+      secret-key: ${YANDEX_S3_SECRET_KEY}
+      endpoint-url: https://storage.yandexcloud.net
+
+server:
+  port: 8092
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://mc-eureka-conteiner:8888/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    hostname: localhost
